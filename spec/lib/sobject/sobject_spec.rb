@@ -764,6 +764,15 @@ describe Databasedotcom::Sobject::Sobject do
           obj.to_param.should == "foo"
         end
       end
+
+      describe "#to_soap" do
+        it "returns the object serialized as xml" do
+          obj = TestClass.new
+          obj.Id = "foo"
+          obj.to_soap_message.should =~ /^<urn:sObjects xsi:type=\"urn1:TestClass\"><Id>foo<\/Id>/
+          obj.to_soap_message.should =~ /<\/urn:sObjects>$/
+        end
+      end
     end
 
     describe "#reload" do

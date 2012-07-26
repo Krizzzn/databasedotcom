@@ -242,7 +242,8 @@ module Databasedotcom
     end
 
     def create_all(array_of_sobjects)
-      puts Databasedotcom::Soap::Messages
+      bulk_client = Databasedotcom::Soap::Client.new
+      bulk_client.insert array_of_sobjects
     end
 
     # Updates the attributes of the record of type _class_or_classname_ and specified by _record_id_ with the values of _new_attrs_ in the Force.com database. _new_attrs_ is a hash of attribute => value
