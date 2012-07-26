@@ -66,13 +66,14 @@ module Databasedotcom
       end
 
       # Serializes the SObject as XML atom required by the Force.com SOAP API
-      def to_soap_message
+      def to_soap_message(&block)
         field_list = self.instance_variables
           .select {|f| self.instance_variable_get(f) }
           .map    {|f| [f.to_s[1..-1], self.instance_variable_get(f)] }
         fields = Hash[*field_list.flatten]
 
         soap =  "<urn:sObjects xsi:type=\"urn1:#{self.class}\">"
+        soap << yield(self) if block
         soap << fields.map {|k,v| "<#{k}>#{v}</#{k}>" }.join("\n")
         soap << "</urn:sObjects>"
         soap

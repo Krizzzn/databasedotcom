@@ -255,6 +255,11 @@ module Databasedotcom
       http_patch("/services/data/v#{self.version}/sobjects/#{class_or_classname.sobject_name}/#{record_id}", json_for_update)
     end
 
+    def update_all(array_of_sobjects, fields_to_null = [])
+      bulk_client = Databasedotcom::Soap::Client.new
+      bulk_client.update array_of_sobjects, fields_to_null
+    end
+
     # Attempts to find the record on Force.com of type _class_or_classname_ with attribute _field_ set as _value_. If found, it will update the record with the _attrs_ hash.
     # If not found, it will create a new record with _attrs_.
     #

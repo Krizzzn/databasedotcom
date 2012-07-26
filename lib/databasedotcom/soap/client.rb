@@ -42,6 +42,22 @@ module Databasedotcom
   			@errors
   		end
 
+  		def update(array_of_sobjects = [], fields_to_null = [])
+  			@current_record = 0
+  			@errors = []
+
+  			subject = Client::filter_sobjects(array_of_sobjects)
+
+  			@rest_client = subject.first.client
+  			action = "update"
+  			Client::soap_messages_for_update(subject, fields_to_null).each{|slice|
+  				body = Databasedotcom::Soap::Messages::build_update({:body => slice.join("\n"), :session_id => @rest_client.oauth_token})
+  				response = self.http_request({:body => body, :soap_action => action})
+  				read_response(response, array_of_sobjects, action){|sobject, result| sobject.Id = nil }
+  			}
+  			@errors
+  		end
+
   		def read_response response, array_of_sobjects, action
   			hashed_response = Hash.from_xml(response.body)
   			
@@ -73,6 +89,16 @@ module Databasedotcom
   			Client::filter_sobjects(array_of_sobjects)
   				.select {|sobject| sobject.Id}
   				.map 	{|sobject| "<urn:ids>#{sobject.Id}</urn:ids>"}
+  				.each_slice(@record_limit)
+  		end
+
+  		def self.soap_messages_for_update(array_of_sobjects = [], fields_to_null)
+  			fields_to_null_string = fields_to_null.map{|n| "<urn1:fieldsToNull>#{n.to_s}</urn1:fieldsToNull>"}.join
+  			fields_to_null_string ||= ""
+
+  			Client::filter_sobjects(array_of_sobjects)
+  			  	.select {|sobject| sobject.Id}
+  				.map{|sobject| sobject.to_soap_message{ fields_to_null_string } }
   				.each_slice(@record_limit)
   		end
 
