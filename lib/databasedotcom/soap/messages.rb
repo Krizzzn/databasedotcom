@@ -21,6 +21,24 @@ module Databasedotcom
 			Messages::apply_template message, value_hash
   		end
 
+  		def self.build_delete(value_hash = {})
+  			message = "<?xml version=\"1.0\" encoding=\"utf-8\"?>   
+<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"
+  xmlns:urn=\"urn:enterprise.soap.sforce.com\">
+  <soapenv:Header>
+     <urn:SessionHeader>
+        <urn:sessionId>:::session_id:::</urn:sessionId>
+     </urn:SessionHeader>
+  </soapenv:Header>
+  <soapenv:Body>
+     <urn:delete>
+     	:::body:::
+     </urn:delete>
+  </soapenv:Body>
+</soapenv:Envelope>"
+			Messages::apply_template message, value_hash
+  		end
+
   		private
 
   		def self.apply_template(template_string, value_hash = {})

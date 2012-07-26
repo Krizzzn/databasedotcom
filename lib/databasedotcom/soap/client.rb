@@ -15,24 +15,42 @@ module Databasedotcom
 
   			subject = Client::filter_sobjects(array_of_sobjects)
   			@rest_client = subject.first.client
+  			action = "create"
 
   			Client::soap_messages(subject).each{|slice|
   				body = Databasedotcom::Soap::Messages::build_insert({:body => slice.join("\n"), :session_id => @rest_client.oauth_token})
-  				response = self.http_request({:body => body, :soap_action => 'create'})
-  				read_insert_response response, array_of_sobjects
+  				response = self.http_request({:body => body, :soap_action => action})
+  				read_response(response, array_of_sobjects, action){|sobject, result| sobject.Id = result["id"] }
   			}
   			@errors
   		end	
 
-  		def read_insert_response response, array_of_sobjects
+  		def delete(array_of_sobjects = [])
+  			@current_record = 0
+  			@errors = []
+
+  			subject = Client::filter_sobjects(array_of_sobjects)
+  			@rest_client = subject.first.client
+  			action = "delete"
+
+  			Client::soap_messages_for_delete(subject).each{|slice|
+  				body = Databasedotcom::Soap::Messages::build_delete({:body => slice.join("\n"), :session_id => @rest_client.oauth_token})
+  				response = self.http_request({:body => body, :soap_action => action})
+  				puts response.body
+  				read_response(response, array_of_sobjects, action){|sobject, result| sobject.Id = nil }
+  			}
+  			@errors
+  		end
+
+  		def read_response response, array_of_sobjects, action
   			hashed_response = Hash.from_xml(response.body)
   			
-  			results = hashed_response["Envelope"]["Body"]["createResponse"]["result"]
+  			results = hashed_response["Envelope"]["Body"]["#{action}Response"]["result"]
   			results = [results] unless results.is_a?(Array)
 
   			results.each {|result|
   				if result["success"] == "true"
-  					array_of_sobjects[@current_record].Id = result["id"]
+  					yield array_of_sobjects[@current_record], result
   				else
   					@errors.push Databasedotcom::Soap::SoapError.new(result, array_of_sobjects[@current_record])
   				end
@@ -48,6 +66,13 @@ module Databasedotcom
   		def self.soap_messages(array_of_sobjects = [])
   			Client::filter_sobjects(array_of_sobjects)
   				.map{|sobject| sobject.to_soap_message}
+  				.each_slice(@record_limit)
+  		end
+
+  		def self.soap_messages_for_delete(array_of_sobjects = [])
+  			Client::filter_sobjects(array_of_sobjects)
+  				.select {|sobject| sobject.Id}
+  				.map 	{|sobject| "<urn:ids>#{sobject.Id}</urn:ids>"}
   				.each_slice(@record_limit)
   		end
 

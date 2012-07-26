@@ -273,6 +273,11 @@ module Databasedotcom
       http_delete("/services/data/v#{self.version}/sobjects/#{clazz.sobject_name}/#{record_id}")
     end
 
+    def delete_all(array_of_sobjects)
+      bulk_client = Databasedotcom::Soap::Client.new
+      bulk_client.delete array_of_sobjects
+    end
+
     # Returns a Collection of recently touched items. The Collection contains Sobject instances that are fully populated with their correct values.
     def recent
       result = http_get("/services/data/v#{self.version}/recent")
