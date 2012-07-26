@@ -270,6 +270,11 @@ module Databasedotcom
       http_patch("/services/data/v#{self.version}/sobjects/#{clazz.sobject_name}/#{field}/#{value}", json_for_update)
     end
 
+    def upsert_all(array_of_sobjects, field)
+      bulk_client = Databasedotcom::Soap::Client.new
+      bulk_client.upsert array_of_sobjects, field
+    end
+
     # Deletes the record of type _class_or_classname_ with id of _record_id_. _class_or_classname_ can be a String or a Class.
     #
     #    client.delete(Car, "rid")

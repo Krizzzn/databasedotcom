@@ -58,6 +58,23 @@ module Databasedotcom
   			@errors
   		end
 
+  		def upsert(array_of_sobjects = [], external_id_field)
+  			@current_record = 0
+  			@errors = []
+
+  			subject = Client::filter_sobjects(array_of_sobjects)
+
+  			@rest_client = subject.first.client
+  			action = "upsert"
+  			Client::soap_messages(subject).each{|slice|
+  				body = Databasedotcom::Soap::Messages::build_upsert({:body => slice.join("\n"), :session_id => @rest_client.oauth_token, :external_id_field => external_id_field})
+  				response = self.http_request({:body => body, :soap_action => action})
+  				p response.body
+  				read_response(response, array_of_sobjects, action){|sobject, result| sobject.Id = nil }
+  			}
+  			@errors
+  		end
+
   		def read_response response, array_of_sobjects, action
   			hashed_response = Hash.from_xml(response.body)
   			
@@ -137,6 +154,7 @@ module Databasedotcom
 				"Expect"		=> "100-continue"
 			})
 			request.body = hash[:body]
+			puts request.body
 			log_http_request request
 			request
   		end
