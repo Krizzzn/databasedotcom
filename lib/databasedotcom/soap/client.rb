@@ -5,6 +5,8 @@ require 'active_support/core_ext'
 module Databasedotcom
   module Soap
   	class Client
+  		attr_accessor :rest_client
+
   		@record_limit = 200 
   		@current_record = 0
   		@errors = nil
@@ -144,17 +146,18 @@ module Databasedotcom
   		end
   		
   		def create_http_request(hash = {})
+  			raise ArgumentError.new(":body is not supplied") if !hash[:body] || hash[:body].empty?
+			
 			request = Net::HTTP::Post.new(hash[:uri].request_uri)
 			request.initialize_http_header({
 				"User-Agent" 	=> "databasedotcom soap extensions",
 				"Content-Type" 	=> "text/xml; charset=utf-8",
 				"Content-Length"=> hash[:body].length.to_s,
-				"SOAPAction" 	=> "create",
+				"SOAPAction" 	=> hash[:action] || "",
 				"Host" 			=> hash[:uri].host,
 				"Expect"		=> "100-continue"
 			})
 			request.body = hash[:body]
-			puts request.body
 			log_http_request request
 			request
   		end
