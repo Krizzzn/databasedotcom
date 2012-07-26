@@ -4,9 +4,7 @@ require "uri"
 module Databasedotcom
   module Soap
   	class Client
-
   		@record_limit = 200
-
 
   		def insert(array_of_sobjects = [])
   			subject = Client::filter_sobjects(array_of_sobjects)
@@ -18,8 +16,6 @@ module Databasedotcom
   				self.http_request({:body => body, :soap_action => 'create'})
   			}
   		end	
-
-  		#private
 
   		def self.filter_sobjects(array_of_sobjects = [])
   			array_of_sobjects.select{|obj| obj.is_a?(Databasedotcom::Sobject::Sobject)}
@@ -39,8 +35,12 @@ module Databasedotcom
         	request = create_http_request(hash[:body], uri)
 
         	response = http.request request
-        	puts response.body 
+        	log_response response
         	response
+  		end
+
+  		def log_response(response)
+  			puts "***** SOAP RESPONSE STATUS:\n#{response.code}\n***** BODY:\n#{response.body}" if @rest_client.debugging
   		end
 
   		def create_http_socket(uri)
@@ -61,18 +61,13 @@ module Databasedotcom
 				"Host" 			=> uri.host,
 				"Expect"		=> "100-continue"
 			})
-			puts body
 			request.body = body
+			log_http_request request
 			request
-			#p (request.methods - Object.methods).sort
-			#p request.length
-			#response = http.request(request)
+  		end
 
-
-			#puts response.code
-			# => 301
-			#response.body # All headers are lowercase
-			# => http://www.google.com/
+  		def log_http_request(http_request)
+  			puts "***** SOAP REQUEST BODY:\n#{request.body}" if @rest_client.debugging
   		end
   	end
   end
