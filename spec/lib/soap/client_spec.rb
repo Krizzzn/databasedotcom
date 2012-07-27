@@ -111,7 +111,7 @@ describe Databasedotcom::Soap::Client do
 
         it "should set ids when returning positive results from a single request" do
           @response_body = File.read(File.join(File.dirname(__FILE__), "../../fixtures/soap/create_positive_response_5_items.xml"))
-          stub_request(:post, "https://foobar.com:80/services/Soap/c/21").to_return(:body => @response_body)
+          stub_request(:post, "https://foobar.com:80/services/Soap/c/21").with(:body => /<urn:create/).to_return(:body => @response_body)
 
           @boom_boxes[2].Id.nil?.should be_true
 
@@ -247,7 +247,7 @@ describe Databasedotcom::Soap::Client do
 
         it "should set ids when returning positive results from a single request" do
           @response_body = File.read(File.join(File.dirname(__FILE__), "../../fixtures/soap/delete_positive_response_5_items.xml"))
-          stub_request(:post, "https://foobar.com:80/services/Soap/c/21").to_return(:body => @response_body)
+          stub_request(:post, "https://foobar.com:80/services/Soap/c/21").with(:body => /<urn:delete/).to_return(:body => @response_body)
 
           @boom_boxes[1].Id.should == "zwei"
 
