@@ -109,7 +109,22 @@ describe Databasedotcom::Soap::Client do
           }
         end
 
-        it "should set ids when returns positive result from two requests" do
+        it "should set ids when returning positive results from a single request" do
+          @response_body = File.read(File.join(File.dirname(__FILE__), "../../fixtures/soap/create_positive_response_5_items.xml"))
+          stub_request(:post, "https://foobar.com:80/services/Soap/c/21").to_return(:body => @response_body)
+
+          @boom_boxes[2].Id.nil?.should be_true
+
+          @soap_client.insert @boom_boxes
+
+          @boom_boxes[0].Id.should == "eins"
+          @boom_boxes[1].Id.should == "zwei"
+          @boom_boxes[2].Id.should == "drei"
+          @boom_boxes[3].Id.should == "vier"
+          @boom_boxes[4].Id.should == "fuenf"
+        end        
+
+        it "should set ids when returning positive results from two requests" do
           @soap_client.record_limit = 3
           @response_bodies = File.read(File.join(File.dirname(__FILE__), "../../fixtures/soap/create_positive_response_5_items_in_two_requests.xml")).split("::::::")
           stub_request(:post, "https://foobar.com:80/services/Soap/c/21").with(:body => /item\#2/).to_return(:body => @response_bodies[0])
@@ -126,7 +141,7 @@ describe Databasedotcom::Soap::Client do
           @boom_boxes[4].Id.should == "fuenf"
         end
 
-        it "should set ids when returns positive result from two requests when array_of_sobjects contains crap" do
+        it "should set ids when returning positive results from two requests when array_of_sobjects contains crap" do
           @soap_client.record_limit = 3
           @response_bodies = File.read(File.join(File.dirname(__FILE__), "../../fixtures/soap/create_positive_response_5_items_in_two_requests.xml")).split("::::::")
           stub_request(:post, "https://foobar.com:80/services/Soap/c/21").with(:body => /item\#2/).to_return(:body => @response_bodies[0])

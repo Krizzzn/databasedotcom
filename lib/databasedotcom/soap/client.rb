@@ -73,14 +73,6 @@ module Databasedotcom
   			@errors
   		end
 
-  		# slices the sobjects in to chunks of +@record_limit+ pieces and converts them to a soap message
-  		def soap_messages(array_of_sobjects = [])
-        p @record_limit
-  			Client::filter_sobjects(array_of_sobjects)
-  				.map{|sobject| sobject.to_soap_message}
-  				.each_slice(@record_limit)
-  		end
-
   		def self.soap_messages_for_delete(array_of_sobjects = [])
   			Client::filter_sobjects(array_of_sobjects)
   				.select {|sobject| sobject.Id}
@@ -120,20 +112,27 @@ module Databasedotcom
         array_of_sobjects.flatten!
         @current_record = 0
         @errors = []
-        subject = Client::filter_sobjects(array_of_sobjects)
+        valid_sobjects = Client::filter_sobjects(array_of_sobjects)
 
-        return @errors if subject.empty?
-        @rest_client = subject.first.client
-        raise ArgumentError.new("#{subject.first.client} does not have a rest client set") unless @rest_client 
+        return @errors if valid_sobjects.empty?
+        @rest_client = valid_sobjects.first.client
+        raise ArgumentError.new("#{valid_sobjects.first.client} does not have a rest client set") unless @rest_client 
         
-        self.soap_messages(subject).each{|slice|
+        soap_messages(valid_sobjects, soap_action).each{|slice|
           body = Databasedotcom::Soap::Messages::build_insert({:body => slice.join("\n"), :session_id => @rest_client.oauth_token})
 
           response = self.http_request({:body => body, :action => soap_action.to_s})
-          read_response(response, subject, soap_action.to_s){|sobject, result| sobject.Id = result["id"] }
+          read_response(response, valid_sobjects, soap_action.to_s){|sobject, result| sobject.Id = result["id"] }
         }
         @errors
       end 
+
+      # slices the sobjects in to chunks of +@record_limit+ pieces and converts them to a soap message
+      def soap_messages(array_of_sobjects = [], soap_action)
+        array_of_sobjects
+          .map{|sobject| Databasedotcom::Soap::Messages::convert_to_soap_message(sobject, soap_action) }
+          .each_slice(@record_limit)
+      end
 
       def read_response response, array_of_sobjects, action
         hashed_response = Hash.from_xml(response.body)

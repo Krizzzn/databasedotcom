@@ -22,6 +22,26 @@ module Databasedotcom
         Messages::build_message value_hash
   		end
 
+      # Serializes the SObject as XML atom required by the Force.com SOAP API
+      def self.convert_to_soap_message(s_object, soap_action = :create, &block)       
+        return nil unless s_object.is_a?(Databasedotcom::Sobject::Sobject)
+        return "<urn:ids>#{s_object.Id}</urn:ids>" if soap_action == :delete
+
+        field_list = s_object.instance_variables
+          .select {|f| 
+            field_name = s_object.instance_variable_get(f) 
+            (soap_action == :create && s_object.createable?(f.to_s[1..-1])) || (soap_action == :update && s_object.updateable?(f.to_s[1..-1])) || soap_action == :upsert
+          }
+          .map    {|f| [f.to_s[1..-1], s_object.instance_variable_get(f)] }
+        fields = Hash[*field_list.flatten]
+
+        soap =  "<urn:sObjects xsi:type=\"urn1:#{s_object.class.to_s.split('::').last}\">"
+        soap << yield(s_object) if block
+        soap << fields.map {|k,v| "<#{k}>#{v}</#{k}>" }.join("\n")
+        soap << "</urn:sObjects>"
+        soap
+      end
+
   		private
 
   		def self.apply_template(template_string, value_hash = {})
