@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.add_dependency('multipart-post', '~>1.1')
   s.add_dependency('json')
+  s.add_dependency('active_support')
   s.add_development_dependency('rspec', "~>2.6")
   s.add_development_dependency('webmock')
   s.add_development_dependency('rake', '0.8.6')
