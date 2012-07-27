@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"  xmlns="urn:enterprise.soap.sforce.com">
+  <soapenv:Body>
+     <deleteResponse>
+        <result>
+           <id>eins</id>
+           <success>true</success>
+        </result>
+        <result>
+           <id>zwei</id>
+           <success>true</success>
+        </result>
+        <result>
+           <id>drei</id>
+           <success>true</success>
+        </result>
+        <result>
+           <id>vier</id>
+           <success>true</success>
+        </result>
+        <result>
+           <id>fuenf</id>
+           <success>true</success>
+        </result>
+     </deleteResponse>
+  </soapenv:Body>
+</soapenv:Envelope>

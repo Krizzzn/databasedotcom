@@ -3,7 +3,7 @@ module Databasedotcom
   module Soap
     class SoapError < StandardError
       # the s_object the error occured at.
-      @s_object = nil
+      attr_accessor :s_object
   
       def initialize(hash = [], erroring_sobject)
         error = hash["errors"]

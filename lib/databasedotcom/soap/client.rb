@@ -18,7 +18,8 @@ module Databasedotcom
         perform_soap_action :create, array_of_sobjects
       end 
 
-  		def delete(array_of_sobjects = [])
+  		def delete(*array_of_sobjects)
+        return perform_soap_action(:delete, array_of_sobjects)
         throw StandardError("not implemented")
   			@current_record = 0
   			@errors = []
@@ -121,8 +122,8 @@ module Databasedotcom
         soap_messages(valid_sobjects, soap_action).each{|slice|
           body = Databasedotcom::Soap::Messages::build_insert({:body => slice.join("\n"), :session_id => @rest_client.oauth_token})
 
-          response = self.http_request({:body => body, :action => soap_action.to_s})
-          read_response(response, valid_sobjects, soap_action.to_s){|sobject, result| sobject.Id = result["id"] }
+          response = self.http_request(:body => body, :action => soap_action.to_s)
+          read_response(response, valid_sobjects, soap_action)
         }
         @errors
       end 
@@ -134,15 +135,20 @@ module Databasedotcom
           .each_slice(@record_limit)
       end
 
-      def read_response response, array_of_sobjects, action
+      def read_response response, array_of_sobjects, soap_action
         hashed_response = Hash.from_xml(response.body)
         
-        results = hashed_response["Envelope"]["Body"]["#{action}Response"]["result"]
+        results = hashed_response["Envelope"]["Body"]["#{soap_action.to_s}Response"]["result"]
         results = [results] unless results.is_a?(Array)
 
         results.each {|result|
           if result["success"] == "true"
-            yield array_of_sobjects[@current_record], result
+            array_of_sobjects[@current_record].Id = case soap_action
+                                                    when :create, :upsert
+                                                        result["id"]
+                                                    when :delete
+                                                       nil
+                                                    end
           else
             @errors.push Databasedotcom::Soap::SoapError.new(result, array_of_sobjects[@current_record])
           end
