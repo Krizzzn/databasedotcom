@@ -1,7 +1,7 @@
 module Databasedotcom
   module Soap
   	class Messages
-  		def self.build_insert(value_hash = {})
+  		def self.build_create(value_hash = {})
         value_hash[:method] = "create"
   		  Messages::build_message value_hash
   		end

@@ -22,7 +22,9 @@ module Databasedotcom
         perform_soap_action(:delete, array_of_sobjects)
   		end
 
-  		def update(array_of_sobjects = [], fields_to_null = [])
+  		def update(array_of_sobjects = [], fields_to_null = nil)
+        return perform_soap_action(:update, array_of_sobjects)
+
         throw StandardError("not implemented")
 
   			@current_record = 0
@@ -95,6 +97,7 @@ module Databasedotcom
       private
 
       def perform_soap_action(soap_action, array_of_sobjects)
+        array_of_sobjects = [array_of_sobjects] unless array_of_sobjects.is_a?(Array)
         array_of_sobjects.flatten!
         @current_record = 0
         @errors = []
@@ -105,14 +108,7 @@ module Databasedotcom
         raise ArgumentError.new("#{valid_sobjects.first.client} does not have a rest client set") unless @rest_client 
         
         soap_messages(valid_sobjects, soap_action).each{|slice|
-          if soap_action  == :create
-            body = Databasedotcom::Soap::Messages::build_insert({:body => slice.join("\n"), :session_id => @rest_client.oauth_token})
-          elsif soap_action  == :delete
-            body = Databasedotcom::Soap::Messages::build_delete({:body => slice.join("\n"), :session_id => @rest_client.oauth_token})
-          else
-            throw new StandardError("this implementation sucks. And it is not implemented")
-          end
-
+          body = Databasedotcom::Soap::Messages::send "build_#{soap_action.to_s}", {:body => slice.join("\n"), :session_id => @rest_client.oauth_token}
           response = self.http_request(:body => body, :action => soap_action.to_s)
           read_response(response, valid_sobjects, soap_action)
         }
@@ -135,7 +131,7 @@ module Databasedotcom
         results.each {|result|
           if result["success"] == "true"
             array_of_sobjects[@current_record].Id = case soap_action
-                                                    when :create, :upsert
+                                                    when :create, :upsert, :update
                                                         result["id"]
                                                     when :delete
                                                        nil

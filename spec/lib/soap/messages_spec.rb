@@ -7,11 +7,11 @@ describe Databasedotcom::Soap::Messages do
 
   context "as a soap message builder" do
     
-    it "should build a valid insert message" do
-      insert_message = Databasedotcom::Soap::Messages.build_insert({:session_id => "boohoo", :body => "<mambo></mambo>"})
-      insert_message.should =~ /<urn:sessionId>boohoo<\/urn:sessionId>/
-      insert_message.should =~ /<mambo><\/mambo>/
-      insert_message.should =~ /<urn:create>/
+    it "should build a valid create message" do
+      create_message = Databasedotcom::Soap::Messages.build_create({:session_id => "boohoo", :body => "<mambo></mambo>"})
+      create_message.should =~ /<urn:sessionId>boohoo<\/urn:sessionId>/
+      create_message.should =~ /<mambo><\/mambo>/
+      create_message.should =~ /<urn:create>/
     end
 
     it "should build a valid delete message" do
@@ -130,7 +130,7 @@ describe Databasedotcom::Soap::Messages do
       soap.should_not =~ /<Bort>bort<\/Bort>/
     end
 
-    it "should insert custom block" do
+    it "should create custom block" do
       boom = MySobjects::Boombox.new
       boom.Id = "foo"
       boom.Bort = "bort"
