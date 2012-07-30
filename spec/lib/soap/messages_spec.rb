@@ -102,7 +102,7 @@ describe Databasedotcom::Soap::Messages do
       soap.should_not =~ /<NotUpdateable>baz<\/NotUpdateable>/
     end
 
-    it "should serialize all available fields that are updatable soap action is update" do
+    it "should only return <urn:ids> when action is :delete" do
       boom = MySobjects::Boombox.new
       boom.Id = "123456"
       boom.Bort = "bort"

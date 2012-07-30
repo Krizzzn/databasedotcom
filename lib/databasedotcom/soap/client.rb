@@ -14,11 +14,11 @@ module Databasedotcom
         @record_limit = 200
       end
 
-      def insert(*array_of_sobjects)
+      def insert(array_of_sobjects)
         perform_soap_action :create, array_of_sobjects
       end 
 
-  		def delete(*array_of_sobjects)
+  		def delete(array_of_sobjects)
         perform_soap_action(:delete, array_of_sobjects)
   		end
 
@@ -26,7 +26,7 @@ module Databasedotcom
         perform_soap_action(:update, array_of_sobjects, {:fields_to_null => fields_to_null})
   		end
 
-  		def upsert(*array_of_sobjects, external_id_field)
+  		def upsert(array_of_sobjects, external_id_field)
         perform_soap_action(:upsert, array_of_sobjects, {:external_id_field => "<urn:externalIDFieldName>#{external_id_field}</urn:externalIDFieldName>"})
   		end
 

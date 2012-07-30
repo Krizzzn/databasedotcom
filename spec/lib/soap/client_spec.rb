@@ -73,7 +73,7 @@ describe Databasedotcom::Soap::Client do
         end
 
         it "should not do anything when given an empty array of sobjects" do
-          ret = @soap_client.insert
+          ret = @soap_client.insert nil
           ret.empty?.should be_true
         end
 
@@ -207,7 +207,7 @@ describe Databasedotcom::Soap::Client do
         end
 
         it "should not do anything when given an empty array of sobjects" do
-          ret = @soap_client.delete
+          ret = @soap_client.delete nil
           ret.empty?.should be_true
         end
 
@@ -493,7 +493,7 @@ describe Databasedotcom::Soap::Client do
         end
 
         it "should not do anything when given an empty array of sobjects" do
-          ret = @soap_client.upsert "some_field"
+          ret = @soap_client.upsert nil, "some_field"
           ret.empty?.should be_true
         end
 
@@ -503,7 +503,7 @@ describe Databasedotcom::Soap::Client do
         end
 
         it "should not do anything when giving crap objects" do
-          ret = @soap_client.upsert "some_field"
+          ret = @soap_client.upsert 1, "some_field"
           ret.empty?.should be_true
         end
 
