@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"  xmlns="urn:enterprise.soap.sforce.com">
+  <soapenv:Body>
+     <upsertResponse>
+        <result>
+           <created>true</created>
+           <id>eins</id>
+           <success>true</success>
+        </result>
+        <result>
+           <created>true</created>
+           <id>zwei</id>
+           <success>true</success>
+        </result>
+        <result>
+           <success>false</success>
+           <errors>
+              <fields>any</fields>
+              <statusCode>404</statusCode>
+              <message>meh!</message>
+           </errors>           
+        </result>
+        <result>
+           <created>true</created>
+           <id>vier</id>
+           <success>true</success>
+        </result>
+        <result>
+           <id></id>
+           <success>false</success>
+           <errors>
+              <fields>some</fields>
+              <statusCode>423</statusCode>
+              <message>this sucks!</message>
+           </errors>
+        </result>
+     </upsertResponse>
+  </soapenv:Body>
+</soapenv:Envelope>
+
+
+
+
+

@@ -2,7 +2,7 @@ module Databasedotcom
   module Soap
   	class Messages
 
-      def self.build_message(method, body, session_id)
+      def self.build_message(method, body, session_id, additionals)
         message = "<?xml version=\"1.0\" encoding=\"utf-8\"?>   
 <soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"
   xmlns:urn=\"urn:enterprise.soap.sforce.com\"
@@ -15,11 +15,12 @@ module Databasedotcom
   </soapenv:Header>
   <soapenv:Body>
      <urn:;;;method;;;>
+      ;;;external_id_field;;;
       ;;;body;;;
      </urn:;;;method;;;>
   </soapenv:Body>
 </soapenv:Envelope>"
-        Messages::apply_template message, {:method => method, :body => body, :session_id => session_id}
+        Messages::apply_template message, {:method => method.to_s, :body => body, :session_id => session_id, :external_id_field => additionals[:external_id_field]}
       end
 
       # Serializes the SObject as XML atom required by the Force.com SOAP API
@@ -44,11 +45,6 @@ module Databasedotcom
       end
 
   		private
-
-      def self.upsert_message(sobject, additionals)
-        #raise ArgumentError.new("meh!")
-        "meh!"
-      end
 
       def self.update_message(sobject, additionals)
         message = "<urn1:Id>#{sobject.Id}</urn1:Id>"

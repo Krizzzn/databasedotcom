@@ -26,23 +26,8 @@ module Databasedotcom
         perform_soap_action(:update, array_of_sobjects, {:fields_to_null => fields_to_null})
   		end
 
-  		def upsert(array_of_sobjects = [], external_id_field)
-        throw StandardError("not implemented")
-
-  			@current_record = 0
-  			@errors = []
-
-  			subject = Client::filter_sobjects(array_of_sobjects)
-
-  			@rest_client = subject.first.client
-  			action = "upsert"
-  			Client::soap_messages(subject).each{|slice|
-  				body = Databasedotcom::Soap::Messages::build_upsert({:body => slice.join("\n"), :session_id => @rest_client.oauth_token, :external_id_field => external_id_field})
-  				response = self.http_request({:body => body, :soap_action => action})
-  				p response.body
-  				read_response(response, array_of_sobjects, action){|sobject, result| sobject.Id = nil }
-  			}
-  			@errors
+  		def upsert(*array_of_sobjects, external_id_field)
+        perform_soap_action(:upsert, array_of_sobjects, {:external_id_field => "<urn:externalIDFieldName>#{external_id_field}</urn:externalIDFieldName>"})
   		end
 
   		def http_request(hash = {})
@@ -63,8 +48,7 @@ module Databasedotcom
       private
 
       def perform_soap_action(soap_action, array_of_sobjects, additionals = {:fields_to_null => nil, :external_id_field => nil})
-        array_of_sobjects = [array_of_sobjects] unless array_of_sobjects.is_a?(Array)
-        array_of_sobjects.flatten!
+        array_of_sobjects = [array_of_sobjects].flatten
         @current_record = 0
         @errors = []
         valid_sobjects = Client::filter_sobjects(array_of_sobjects)
@@ -74,7 +58,7 @@ module Databasedotcom
         raise ArgumentError.new("#{valid_sobjects.first.client} does not have a rest client set") unless @rest_client 
         
         soap_messages(valid_sobjects, soap_action, additionals).each{|slice|
-          body = Databasedotcom::Soap::Messages::build_message(soap_action.to_s, slice.join("\n"), @rest_client.oauth_token)
+          body = Databasedotcom::Soap::Messages::build_message(soap_action, slice.join("\n"), @rest_client.oauth_token, additionals)
           response = self.http_request(:body => body, :action => soap_action.to_s)
           read_response(response, valid_sobjects, soap_action)
         }

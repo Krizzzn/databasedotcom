@@ -8,10 +8,15 @@ describe Databasedotcom::Soap::Messages do
   context "as a soap message builder" do
     
     it "should build a valid create message" do
-      message = Databasedotcom::Soap::Messages.build_message("boing", "<mambo></mambo>", "boohoo")
+      message = Databasedotcom::Soap::Messages.build_message("boing", "<mambo></mambo>", "boohoo", {})
       message.should =~ /<urn:sessionId>boohoo<\/urn:sessionId>/
       message.should =~ /<mambo><\/mambo>/
       message.should =~ /<urn:boing>/
+    end
+
+    it "should build a valid create message" do
+      message = Databasedotcom::Soap::Messages.build_message("boing", "<mambo></mambo>", "boohoo", {:external_id_field => "<b>an_external_field</b>"})
+      message.should =~ /<b>an_external_field<\/b>/
     end
   end
 
