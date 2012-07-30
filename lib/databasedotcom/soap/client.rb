@@ -73,18 +73,23 @@ module Databasedotcom
       end
 
       def read_response response, array_of_sobjects, soap_action
-        hashed_response = Hash.from_xml(response.body)
-        
-        results = hashed_response["Envelope"]["Body"]["#{soap_action.to_s}Response"]["result"]
+        hashed_response = Hash.from_xml(response.body)["Envelope"]["Body"]
+        if hashed_response["Fault"]   
+          raise Databasedotcom::Soap::SoapError.new({"errors" => {
+            "statusCode" => hashed_response["Fault"]["faultcode"],
+            "message"    => hashed_response["Fault"]["faultstring"]}}, nil)
+        end
+
+        results = hashed_response["#{soap_action.to_s}Response"]["result"]
         results = [results] unless results.is_a?(Array)
 
         results.each {|result|
           if result["success"] == "true"
             array_of_sobjects[@current_record].Id = case soap_action
                                                     when :create, :upsert, :update
-                                                        result["id"]
+                                                      result["id"]
                                                     when :delete
-                                                       nil
+                                                      nil
                                                     end
           else
             @errors.push Databasedotcom::Soap::SoapError.new(result, array_of_sobjects[@current_record])

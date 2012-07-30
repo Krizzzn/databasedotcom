@@ -6,6 +6,19 @@ require 'databasedotcom'
 describe Databasedotcom::Soap::Client do
 
   describe "web requests" do
+
+    module MySobjects
+      class Boombox < Databasedotcom::Sobject::Sobject
+        attr_accessor :Id
+        def initialize(attrs = {})
+        end
+        attr_accessor :bort
+        def self.description 
+          "Boombox"
+        end
+      end
+    end
+
     context "against the soap api" do
       before do
         @soap_client = Databasedotcom::Soap::Client.new
@@ -50,20 +63,6 @@ describe Databasedotcom::Soap::Client do
     end
 
     describe "insert action" do
-      module MySobjects
-        class Boombox < Databasedotcom::Sobject::Sobject
-          attr_accessor :Id
-
-          def initialize(attrs = {})
-          end
-
-          attr_accessor :bort
-
-          def self.description 
-            "Boombox"
-          end
-        end
-      end
 
       context "with invalid inputs" do
         before do
@@ -180,24 +179,19 @@ describe Databasedotcom::Soap::Client do
           errors[1].message.should =~ /this sucks!/
           errors[1].s_object.bort.should == "item#4"
         end 
+
+        it "should read unexpected exceptions" do
+          @response_body = File.read(File.join(File.dirname(__FILE__), "../../fixtures/soap/soap_exceptions.xml"))
+          stub_request(:post, "https://foobar.com:80/services/Soap/c/21").with(:body => /<urn:create/).to_return(:body => @response_body)
+
+          lambda {
+            @soap_client.insert @boom_boxes
+          }.should raise_error(Databasedotcom::Soap::SoapError)
+        end
       end
     end
 
     describe "delete action" do
-      module MySobjects
-        class Boombox < Databasedotcom::Sobject::Sobject
-          attr_accessor :Id
-
-          def initialize(attrs = {})
-          end
-
-          attr_accessor :bort
-
-          def self.description 
-            "Boombox"
-          end
-        end
-      end
 
       context "with invalid inputs" do
         before do
@@ -320,20 +314,6 @@ describe Databasedotcom::Soap::Client do
     end
 
     describe "update action" do
-      module MySobjects
-        class Boombox < Databasedotcom::Sobject::Sobject
-          attr_accessor :Id
-
-          def initialize(attrs = {})
-          end
-
-          attr_accessor :bort
-
-          def self.description 
-            "Boombox"
-          end
-        end
-      end
 
       context "with invalid inputs" do
         before do
@@ -470,20 +450,6 @@ describe Databasedotcom::Soap::Client do
     end
 
     describe "upsert action" do
-      module MySobjects
-        class Boombox < Databasedotcom::Sobject::Sobject
-          attr_accessor :Id
-
-          def initialize(attrs = {})
-          end
-
-          attr_accessor :bort
-
-          def self.description 
-            "Boombox"
-          end
-        end
-      end
 
       context "with invalid inputs" do
         before do
