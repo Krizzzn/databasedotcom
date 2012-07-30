@@ -8,32 +8,10 @@ describe Databasedotcom::Soap::Messages do
   context "as a soap message builder" do
     
     it "should build a valid create message" do
-      create_message = Databasedotcom::Soap::Messages.build_create({:session_id => "boohoo", :body => "<mambo></mambo>"})
-      create_message.should =~ /<urn:sessionId>boohoo<\/urn:sessionId>/
-      create_message.should =~ /<mambo><\/mambo>/
-      create_message.should =~ /<urn:create>/
-    end
-
-    it "should build a valid delete message" do
-      delete_message = Databasedotcom::Soap::Messages.build_delete({:session_id => "hoooboo", :body => "<tango></tango>"})
-      delete_message.should =~ /<urn:sessionId>hoooboo<\/urn:sessionId>/
-      delete_message.should =~ /<tango><\/tango>/
-      delete_message.should =~ /<urn:delete>/
-    end  
-
-    it "should build a valid update message" do
-      update_message = Databasedotcom::Soap::Messages.build_update({:session_id => "update!", :body => "<chacha></chacha>"})
-      update_message.should =~/<urn:sessionId>update!<\/urn:sessionId>/
-      update_message.should =~ /<chacha><\/chacha>/
-      update_message.should =~ /<urn:update>/
-    end
-
-    it "should build a valid upsert message" do
-      upsert_message = Databasedotcom::Soap::Messages.build_upsert({:external_id_field => "external23", :session_id => "upsert!", :body => "<wubwub></wubwub>"})
-      upsert_message.should =~/<urn:sessionId>upsert!<\/urn:sessionId>/
-      upsert_message.should =~ /<wubwub><\/wubwub>/
-      upsert_message.should =~ /<urn:upsert>/
-      upsert_message.should =~ /<urn:externalIDFieldName>external23<\/urn:externalIDFieldName>/
+      message = Databasedotcom::Soap::Messages.build_message("boing", "<mambo></mambo>", "boohoo")
+      message.should =~ /<urn:sessionId>boohoo<\/urn:sessionId>/
+      message.should =~ /<mambo><\/mambo>/
+      message.should =~ /<urn:boing>/
     end
   end
 
@@ -130,17 +108,37 @@ describe Databasedotcom::Soap::Messages do
       soap.should_not =~ /<Bort>bort<\/Bort>/
     end
 
-    it "should create custom block" do
-      boom = MySobjects::Boombox.new
-      boom.Id = "foo"
-      boom.Bort = "bort"
-      boom.AnotherField = "baz"
+    context "with the action :update" do 
 
-      soap = Databasedotcom::Soap::Messages::convert_to_soap_message(boom, :create) {|s| "<customblock>" }
-      soap.should =~ /<urn:sObjects xsi:type=\"urn1:Boombox/
-      soap.should =~ /<Id>foo<\/Id>/
-      soap.should =~ /<Bort>bort<\/Bort>/
-      soap.should =~ /<customblock>/
-    end        
+      it "should create fields to null block" do
+        boom = MySobjects::Boombox.new
+        boom.Id = "foo"
+  
+        soap = Databasedotcom::Soap::Messages::convert_to_soap_message(boom, :update, {:fields_to_null => ["nope", "woop"]})
+        soap.should =~ /<urn:sObjects xsi:type=\"urn1:Boombox/
+        soap.should =~ /<urn1:fieldsToNull>nope<\/urn1:fieldsToNull>/
+        soap.should =~ /<urn1:fieldsToNull>woop<\/urn1:fieldsToNull>/
+      end       
+
+      it "should be able to handle empty :fields_to_null" do
+        boom = MySobjects::Boombox.new
+        boom.Id = "foo"
+  
+        soap = Databasedotcom::Soap::Messages::convert_to_soap_message(boom, :update, {})
+        soap.should =~ /<urn:sObjects xsi:type=\"urn1:Boombox/
+        soap.should_not =~ /<urn1:fieldsToNull>nope<\/urn1:fieldsToNull>/
+        soap.should_not =~ /<urn1:fieldsToNull>woop<\/urn1:fieldsToNull>/
+      end  
+  
+      it "should add the id of the sobject to :update" do
+        boom = MySobjects::Boombox.new
+        boom.Id = "001D000000HTK3aIAH"
+  
+        soap = Databasedotcom::Soap::Messages::convert_to_soap_message(boom, :update, {})
+        soap.should =~ /<urn:sObjects xsi:type=\"urn1:Boombox/
+        soap.should =~ /<urn1:Id>001D000000HTK3aIAH<\/urn1:Id>/
+      end  
+
+    end
   end
 end

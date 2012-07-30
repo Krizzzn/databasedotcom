@@ -23,23 +23,7 @@ module Databasedotcom
   		end
 
   		def update(array_of_sobjects = [], fields_to_null = nil)
-        return perform_soap_action(:update, array_of_sobjects)
-
-        throw StandardError("not implemented")
-
-  			@current_record = 0
-  			@errors = []
-
-  			subject = Client::filter_sobjects(array_of_sobjects)
-
-  			@rest_client = subject.first.client
-  			action = "update"
-  			Client::soap_messages_for_update(subject, fields_to_null).each{|slice|
-  				body = Databasedotcom::Soap::Messages::build_update({:body => slice.join("\n"), :session_id => @rest_client.oauth_token})
-  				response = self.http_request({:body => body, :soap_action => action})
-  				read_response(response, array_of_sobjects, action){|sobject, result| sobject.Id = nil }
-  			}
-  			@errors
+        perform_soap_action(:update, array_of_sobjects, {:fields_to_null => fields_to_null})
   		end
 
   		def upsert(array_of_sobjects = [], external_id_field)
@@ -61,24 +45,6 @@ module Databasedotcom
   			@errors
   		end
 
-  		def self.soap_messages_for_delete(array_of_sobjects = [])
-  			Client::filter_sobjects(array_of_sobjects)
-  				.select {|sobject| sobject.Id}
-  				.map 	{|sobject| "<urn:ids>#{sobject.Id}</urn:ids>"}
-  				.each_slice(@record_limit)
-  		end
-
-  		def self.soap_messages_for_update(array_of_sobjects = [], fields_to_null)
-  			fields_to_null_string = fields_to_null.map{|n| "<urn1:fieldsToNull>#{n.to_s}</urn1:fieldsToNull>"}.join
-  			fields_to_null_string ||= ""
-
-  			Client::filter_sobjects(array_of_sobjects)
-  			  	.select {|sobject| sobject.Id}
-  				.map{|sobject| sobject.to_soap_message{ fields_to_null_string } }
-  				.each_slice(@record_limit)
-  		end
-
-
   		def http_request(hash = {})
         raise ArgumentError.new(":body is not supplied") if !hash[:body] || hash[:body].empty?
         raise ArgumentError.new("@rest_client can not be null") if !@rest_client
@@ -96,7 +62,7 @@ module Databasedotcom
 
       private
 
-      def perform_soap_action(soap_action, array_of_sobjects)
+      def perform_soap_action(soap_action, array_of_sobjects, additionals = {:fields_to_null => nil, :external_id_field => nil})
         array_of_sobjects = [array_of_sobjects] unless array_of_sobjects.is_a?(Array)
         array_of_sobjects.flatten!
         @current_record = 0
@@ -107,8 +73,8 @@ module Databasedotcom
         @rest_client = valid_sobjects.first.client
         raise ArgumentError.new("#{valid_sobjects.first.client} does not have a rest client set") unless @rest_client 
         
-        soap_messages(valid_sobjects, soap_action).each{|slice|
-          body = Databasedotcom::Soap::Messages::send "build_#{soap_action.to_s}", {:body => slice.join("\n"), :session_id => @rest_client.oauth_token}
+        soap_messages(valid_sobjects, soap_action, additionals).each{|slice|
+          body = Databasedotcom::Soap::Messages::build_message(soap_action.to_s, slice.join("\n"), @rest_client.oauth_token)
           response = self.http_request(:body => body, :action => soap_action.to_s)
           read_response(response, valid_sobjects, soap_action)
         }
@@ -116,9 +82,9 @@ module Databasedotcom
       end 
 
       # slices the sobjects in to chunks of +@record_limit+ pieces and converts them to a soap message
-      def soap_messages(array_of_sobjects = [], soap_action)
+      def soap_messages(array_of_sobjects = [], soap_action, additionals)
         array_of_sobjects
-          .map{|sobject| Databasedotcom::Soap::Messages::convert_to_soap_message(sobject, soap_action) }
+          .map{|sobject| Databasedotcom::Soap::Messages::convert_to_soap_message(sobject, soap_action, additionals) }
           .each_slice(@record_limit)
       end
 
