@@ -1,3 +1,5 @@
+require 'htmlentities'
+
 module Databasedotcom
   module Soap
   	class Messages
@@ -28,12 +30,17 @@ module Databasedotcom
         return nil unless sobject.is_a?(Databasedotcom::Sobject::Sobject)
         return "<urn:ids>#{sobject.Id}</urn:ids>" if soap_action == :delete
 
+        coder = HTMLEntities.new
         field_list = sobject.instance_variables
           .select {|f| 
             field_name = sobject.instance_variable_get(f) 
-            (soap_action == :create && sobject.class.createable?(f.to_s[1..-1])) || (soap_action == :update && sobject.class.updateable?(f.to_s[1..-1])) || soap_action == :upsert
+            valid = true
+            valid &= !coder.encode(sobject.instance_variable_get(f)).empty?
+            valid &= !%w(date boolean).include?(sobject.class.field_type(f.to_s[1..-1]))
+            valid &= (soap_action == :create && sobject.class.createable?(f.to_s[1..-1])) || (soap_action == :update && sobject.class.updateable?(f.to_s[1..-1])) || soap_action == :upsert
+            valid
           }
-          .map    {|f| [f.to_s[1..-1], sobject.instance_variable_get(f)] }
+          .map    {|f| [f.to_s[1..-1], coder.encode(sobject.instance_variable_get(f))] }
         fields = Hash[*field_list.flatten]
         additional = Messages::send("#{soap_action.to_s}_message", sobject, additionals) if Messages::respond_to?("#{soap_action.to_s}_message")
         

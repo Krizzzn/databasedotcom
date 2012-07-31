@@ -23,7 +23,7 @@ describe Databasedotcom::Soap::Messages do
   context "::convert_to_soap_message" do
     module MySobjects
       class Boombox < Databasedotcom::Sobject::Sobject
-        attr_accessor :Id, :Bort, :AnotherField, :NotCreateable, :NotUpdateable
+        attr_accessor :Id, :Bort, :AnotherField, :NotCreateable, :NotUpdateable, :ADate
         
         def self.createable?(attr_name)
         	attr_name != "NotCreateable"
@@ -31,6 +31,10 @@ describe Databasedotcom::Soap::Messages do
 
         def self.updateable?(attr_name)
         	attr_name != "NotUpdateable"
+        end
+
+        def self.field_type(attr_name)
+          attr_name == "ADate" ? "date" : "string"
         end
 
         def initialize(attrs = {})
@@ -68,12 +72,13 @@ describe Databasedotcom::Soap::Messages do
     it "should serialize all available fields but only if value is set" do
       boom = MySobjects::Boombox.new
       boom.Id = "foo"
+      boom.Bort = ""
 
       soap = Databasedotcom::Soap::Messages::convert_to_soap_message boom
       soap.should =~ /<urn:sObjects xsi:type=\"urn1:Boombox/
       soap.should =~ /<Id>foo<\/Id>/
-      soap.should_not =~ /<Bort>bort<\/Bort>/
-      soap.should_not =~ /<AnotherField>baz<\/AnotherField>/
+      soap.should_not =~ /<Bort><\/Bort>/
+      soap.should_not =~ /<AnotherField><\/AnotherField>/
     end
 
     it "should serialize all available fields that are creatable soap action is create" do
@@ -113,6 +118,20 @@ describe Databasedotcom::Soap::Messages do
       soap.should_not =~ /<Bort>bort<\/Bort>/
     end
 
+    it "should html escape html entities" do
+      boom = MySobjects::Boombox.new
+      boom.Id = "123456"
+      boom.Bort = "This<br>is a text with<br>new br elements"
+
+      soap = Databasedotcom::Soap::Messages::convert_to_soap_message boom, :update
+      soap.should =~ /<urn:sObjects xsi:type=\"urn1:Boombox/
+      soap.should =~ /<Bort>This&lt;br&gt;is a text with&lt;br&gt;new br elements<\/Bort>/
+    end
+
+    context "handles datatypes" do
+      boom = MySobjects::Boombox.new
+
+    end
     context "with the action :update" do 
 
       it "should create fields to null block" do
