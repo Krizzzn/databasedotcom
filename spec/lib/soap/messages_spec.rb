@@ -25,11 +25,11 @@ describe Databasedotcom::Soap::Messages do
       class Boombox < Databasedotcom::Sobject::Sobject
         attr_accessor :Id, :Bort, :AnotherField, :NotCreateable, :NotUpdateable
         
-        def createable?(attr_name)
+        def self.createable?(attr_name)
         	attr_name != "NotCreateable"
         end
 
-        def updateable?(attr_name)
+        def self.updateable?(attr_name)
         	attr_name != "NotUpdateable"
         end
 

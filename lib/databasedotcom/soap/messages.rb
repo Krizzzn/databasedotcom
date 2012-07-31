@@ -31,7 +31,7 @@ module Databasedotcom
         field_list = sobject.instance_variables
           .select {|f| 
             field_name = sobject.instance_variable_get(f) 
-            (soap_action == :create && sobject.createable?(f.to_s[1..-1])) || (soap_action == :update && sobject.updateable?(f.to_s[1..-1])) || soap_action == :upsert
+            (soap_action == :create && sobject.class.createable?(f.to_s[1..-1])) || (soap_action == :update && sobject.class.updateable?(f.to_s[1..-1])) || soap_action == :upsert
           }
           .map    {|f| [f.to_s[1..-1], sobject.instance_variable_get(f)] }
         fields = Hash[*field_list.flatten]
