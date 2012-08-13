@@ -128,22 +128,34 @@ describe Databasedotcom::Soap::Messages do
       soap.should =~ /<Bort>This&lt;br&gt;is a text with&lt;br&gt;new br elements<\/Bort>/
     end
 
-    context "handle datatype" do
+    context "handling datatypes" do
       boom = MySobjects::Boombox.new
       boom.Id = "123456"
 
-      it "date time should be convert to valid soap date if string is give" do
+      it "date time should be convert to valid soap date if string is given" do
+        MySobjects::Boombox::field_type("ADate").should == "date"
+
         boom.ADate = "2012-08-06 12:30:28 +0200"
 
         soap = Databasedotcom::Soap::Messages::convert_to_soap_message boom, :update
-        soap.should =~ /<ADate>2012-08-06T12:30:28+02:00<\/ADate>/
+        soap.should =~ /<ADate>2012-08-06T12:30:28\+02:00<\/ADate>/
       end
 
-      it "date time should be convert to valid soap date if string is give" do
+      it "date time should be converted to valid soap date if Time is given" do
         boom.ADate = Time.now
 
         soap = Databasedotcom::Soap::Messages::convert_to_soap_message boom, :update
-        soap.should =~ /<ADate>#{boom.ADate.iso8601}<\/ADate>/
+
+        time_string = boom.ADate.iso8601.to_s.gsub(/\+/, ".")
+        soap.should =~ /<ADate>#{time_string}<\/ADate>/
+      end
+
+      it "date time should be nil if soap date if crap is given" do
+        boom.ADate = "this is crap!"
+
+        soap = Databasedotcom::Soap::Messages::convert_to_soap_message boom, :update
+
+        soap.should_not =~ /<ADate>/
       end
     end
 

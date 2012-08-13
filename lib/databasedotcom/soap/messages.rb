@@ -1,4 +1,5 @@
 require 'htmlentities'
+require 'Time'
 
 module Databasedotcom
   module Soap
@@ -35,23 +36,47 @@ module Databasedotcom
           .select {|f| 
             field_name = sobject.instance_variable_get(f) 
             valid = true
-            valid &= !coder.encode(sobject.instance_variable_get(f)).empty?
-            valid &= !%w(date boolean).include?(sobject.class.field_type(f.to_s[1..-1]))
+            valid &= !sobject.instance_variable_get(f).to_s.empty?
             valid &= (soap_action == :create && sobject.class.createable?(f.to_s[1..-1])) || (soap_action == :update && sobject.class.updateable?(f.to_s[1..-1])) || soap_action == :upsert
             valid
           }
-          .map    {|f| [f.to_s[1..-1], coder.encode(sobject.instance_variable_get(f))] }
+          .map    {|f| [f.to_s[1..-1], self.convert(sobject, f, coder) ] }
         fields = Hash[*field_list.flatten]
         additional = Messages::send("#{soap_action.to_s}_message", sobject, additionals) if Messages::respond_to?("#{soap_action.to_s}_message")
         
         soap =  "<urn:sObjects xsi:type=\"urn1:#{sobject.class.to_s.split('::').last}\">"
         soap << additional if additional
-        soap << fields.map {|k,v| "<#{k}>#{v}</#{k}>" }.join("\n")
+        soap << fields.map {|k,v| "<#{k}>#{v}</#{k}>" if v }.join("\n")
         soap << "</urn:sObjects>"
         soap
       end
 
   		private
+
+      def self.convert(sobject, field_name, coder)
+        value = case sobject.class.field_type(field_name.to_s[1..-1])
+        when "date"
+          return self.convert_to_date_string sobject.instance_variable_get(field_name)
+        else
+          sobject.instance_variable_get(field_name)
+        end
+        
+        value = coder.encode(value) if value.class.to_s == String.to_s
+        value
+      end
+
+      def self.convert_to_date_string(date)
+        case date.class.to_s
+        when Time.to_s
+          date.iso8601
+        when String.to_s
+          Time.parse(date).iso8601
+        else
+          nil
+        end
+      rescue
+        nil
+      end
 
       def self.update_message(sobject, additionals)
         message = "<urn1:Id>#{sobject.Id}</urn1:Id>"
