@@ -2,7 +2,6 @@ require 'rspec'
 require 'spec_helper'
 require 'databasedotcom'
 
-
 describe Databasedotcom::Soap::Client do
 
   describe "web requests" do

@@ -23,7 +23,7 @@ describe Databasedotcom::Soap::Messages do
   context "::convert_to_soap_message" do
     module MySobjects
       class Boombox < Databasedotcom::Sobject::Sobject
-        attr_accessor :Id, :Bort, :AnotherField, :NotCreateable, :NotUpdateable, :ADate
+        attr_accessor :Id, :Bort, :AnotherField, :NotCreateable, :NotUpdateable, :ADate, :Data__c
         
         def self.createable?(attr_name)
         	attr_name != "NotCreateable"
@@ -34,7 +34,14 @@ describe Databasedotcom::Soap::Messages do
         end
 
         def self.field_type(attr_name)
-          attr_name == "ADate" ? "date" : "string"
+          case attr_name
+          when "ADate"
+            "date"
+          when "Data__c"
+            "base64"
+          else
+            "string"
+          end
         end
 
         def initialize(attrs = {})
@@ -157,6 +164,14 @@ describe Databasedotcom::Soap::Messages do
 
         soap.should_not =~ /<ADate>/
       end
+
+      it "should not modify base64 data" do
+        boom.Data__c = "    this is > >>> crap!     "
+
+        soap = Databasedotcom::Soap::Messages::convert_to_soap_message boom, :update
+
+        soap.should =~ /    this is > >>> crap!     /
+      end      
     end
 
     context "with the action :update" do 

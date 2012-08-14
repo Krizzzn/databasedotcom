@@ -57,6 +57,8 @@ module Databasedotcom
         value = case sobject.class.field_type(field_name.to_s[1..-1])
         when "date"
           return self.convert_to_date_string sobject.instance_variable_get(field_name)
+        when "base64"
+          return sobject.instance_variable_get(field_name)
         else
           sobject.instance_variable_get(field_name)
         end
