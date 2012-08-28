@@ -59,6 +59,10 @@ module Databasedotcom
         
         soap_messages(valid_sobjects, soap_action, additionals).each{|slice|
           body = Databasedotcom::Soap::Messages::build_message(soap_action, slice.join("\n"), @rest_client.oauth_token, additionals)
+          
+          ##### WORKS ONLY ON A WINDOWS BOX?
+          body.force_encoding "CP850"
+          
           response = self.http_request(:body => body, :action => soap_action.to_s)
           read_response(response, valid_sobjects, soap_action)
         }
@@ -107,27 +111,26 @@ module Databasedotcom
   		end
 
   		def create_http_socket(uri)
-  			http = Net::HTTP.new(uri.host, uri.port)
-			  http.use_ssl = true
-        http.ca_file = @rest_client.ca_file if @rest_client.ca_file
-        http.verify_mode = @rest_client.verify_mode if @rest_client.verify_mode 
-       	http	
+  			Net::HTTP.new(uri.host, uri.port).tap {|http|
+          http.use_ssl = true
+          http.ca_file = @rest_client.ca_file if @rest_client.ca_file
+          http.verify_mode = @rest_client.verify_mode if @rest_client.verify_mode 
+        }
   		end
   		
   		def create_http_request(hash = {})
-			
-			request = Net::HTTP::Post.new(hash[:uri].request_uri)
-			request.initialize_http_header({
-				"User-Agent" 	=> "databasedotcom soap extensions",
-				"Content-Type" 	=> "text/xml; charset=utf-8",
-				"Content-Length"=> hash[:body].length.to_s,
-				"SOAPAction" 	=> hash[:action] || "",
-				"Host" 			=> hash[:uri].host,
-				"Expect"		=> "100-continue"
-			})
-			request.body = hash[:body]
-			log_http_request request
-			request
+			 Net::HTTP::Post.new(hash[:uri].request_uri).tap{|request|
+          request.initialize_http_header({
+            "User-Agent"  => "databasedotcom soap extensions",
+            "Content-Type"  => "text/xml; charset=utf-8",
+            "Content-Length"=> hash[:body].length.to_s,
+            "SOAPAction"  => hash[:action] || "",
+            "Host"      => hash[:uri].host,
+            "Expect"    => "100-continue"
+          })
+          request.body = hash[:body]
+          log_http_request request
+        }
   		end
 
   		def log_http_request(http_request)

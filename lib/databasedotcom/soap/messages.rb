@@ -62,8 +62,7 @@ module Databasedotcom
         else
           sobject.instance_variable_get(field_name)
         end
-        
-        value = coder.encode(value) if value.class.to_s == String.to_s
+        value = coder.encode(value) if value.is_a?(String)
         value
       end
 
